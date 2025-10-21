@@ -5,6 +5,7 @@ import static spark.Spark.delete;
 import static spark.Spark.get;
 import static spark.Spark.port;
 import static spark.Spark.post;
+import static spark.Spark.put;
 
 import com.google.gson.Gson;
 
@@ -81,8 +82,8 @@ public class ApiProduto {
             }
         });
 
-        // POST /produtos/:id - Editar produto pelo ID
-        post("/produtos/:id", new Route() {
+        // PUT /produtos/:id - Editar produto pelo ID
+        put("/produtos/:id", new Route() {
             @Override
             public Object handle(Request request, Response response) {
                 try {
