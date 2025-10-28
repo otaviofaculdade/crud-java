@@ -7,25 +7,28 @@ public class Produto {
     private String nome;
     private double preco;
     private int estoque;
+    private Long categoriaId; // novo atributo
 
-    // contrutor vazio (necessário para frameworks como Gson)
+    // construtor vazio (necessário para frameworks como Gson)
     public Produto() {
     }
 
     // construtor com todos os campos
-    public Produto(Long id, String nome, double preco, int estoque) {
-        this.id = id;
-        this.nome = nome;
-        this.preco = preco;
-        this.estoque = estoque;
-    }
+    public Produto(Long id, String nome, double preco, int estoque, Long categoriaId) {
+    this.id = id;
+    this.nome = nome;
+    this.preco = preco;
+    this.estoque = estoque;
+    this.categoriaId = categoriaId;
+}
 
-    // construtor sem o id (para inserções, onde o id é auto-gerado)
-    public Produto(String nome, double preco, int estoque) {
-        this.nome = nome;
-        this.preco = preco;
-        this.estoque = estoque;
-    }
+// construtor sem ID (para inserções)
+public Produto(String nome, double preco, int estoque, Long categoriaId) {
+    this.nome = nome;
+    this.preco = preco;
+    this.estoque = estoque;
+    this.categoriaId = categoriaId;
+}
 
     // getters e setters
     public Long getId() {
@@ -60,12 +63,21 @@ public class Produto {
         this.estoque = estoque;
     }
 
+    public Long getCategoriaId() {
+        return categoriaId;
+    }
+
+    public void setCategoriaId(Long categoriaId) {
+        this.categoriaId = categoriaId;
+    }
+
     // toString para facilitar a depuração
     @Override
     public String toString() {
         return "Produto [id=" + id +
                 ", nome=" + nome +
                 ", preco=" + preco +
-                ", estoque=" + estoque + "]";
+                ", estoque=" + estoque +
+                ", categoriaId=" + categoriaId + "]";
     }
 }

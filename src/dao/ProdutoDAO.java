@@ -18,7 +18,7 @@ public class ProdutoDAO {
     public List<Produto> buscarTodos() {
         List<Produto> produtos = new ArrayList<>();
         // query SQL para selecionar todos os campos
-        String sql = "SELECT * FROM produtos";
+        String sql = "SELECT id, nome, preco, estoque, categoria_id FROM produtos";
         // o bloco try-with-resources garante que Connection, PreparedStatement e
         // ResultSet
         // serão fechados automaticamente, mesmo que ocorram exceções
@@ -33,7 +33,8 @@ public class ProdutoDAO {
                         rs.getLong("id"),
                         rs.getString("nome"),
                         rs.getDouble("preco"),
-                        rs.getInt("estoque"));
+                        rs.getInt("estoque"),
+                        rs.getObject("categoria_id") != null ? rs.getLong("categoria_id") : null);
                 produtos.add(produto);
             }
         } catch (SQLException e) {
@@ -51,7 +52,7 @@ public class ProdutoDAO {
         Produto produto = null;
 
         // o '?' é um placeholder que será preenchido pelo PreparedStatement
-        String sql = "SELECT id, nome, preco, estoque FROM produtos WHERE id = ?";
+        String sql = "SELECT id, nome, preco, estoque, categoria_id FROM produtos WHERE id = ?";
 
         try (Connection conn = ConnectionFactory.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -66,7 +67,8 @@ public class ProdutoDAO {
                             rs.getLong("id"),
                             rs.getString("nome"),
                             rs.getDouble("preco"),
-                            rs.getInt("estoque"));
+                            rs.getInt("estoque"),
+                            rs.getObject("categoria_id") != null ? rs.getLong("categoria_id") : null);
                 }
             }
         } catch (SQLException e) {
@@ -82,7 +84,7 @@ public class ProdutoDAO {
     public void inserir(Produto produto) {
 
         // usa Statement.RETURN_GENERATED_KEYS para solicitar o ID gerado
-        String sql = "INSERT INTO produtos (nome, preco, estoque) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO produtos (nome, preco, estoque, categoria_id) VALUES (?, ?, ?, ?)";
 
         try (Connection conn = ConnectionFactory.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -91,6 +93,7 @@ public class ProdutoDAO {
             stmt.setString(1, produto.getNome());
             stmt.setDouble(2, produto.getPreco());
             stmt.setInt(3, produto.getEstoque());
+            stmt.setObject(4, produto.getCategoriaId());
 
             // executa a inserção
             stmt.executeUpdate();
@@ -115,7 +118,7 @@ public class ProdutoDAO {
     public void atualizar(Produto produto) {
 
         // a atualização precisa do ID no WHERE e dos novos valores
-        String sql = "UPDATE produtos SET nome = ?, preco = ?, estoque = ? WHERE id = ?";
+        String sql = "UPDATE produtos SET nome = ?, preco = ?, estoque = ?, categoria_id = ? WHERE id = ?";
 
         try (Connection conn = ConnectionFactory.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -124,6 +127,8 @@ public class ProdutoDAO {
             stmt.setString(1, produto.getNome());
             stmt.setDouble(2, produto.getPreco());
             stmt.setInt(3, produto.getEstoque());
+            stmt.setObject(4, produto.getCategoriaId());
+            stmt.setLong(5, produto.getId());
 
             // define o ID no WHERE (o último '?')
             stmt.setLong(4, produto.getId());
@@ -161,5 +166,35 @@ public class ProdutoDAO {
             e.printStackTrace();
         }
     }
-}
 
+    // ------------------------------------
+    // READ BY CATEGORY - Buscar produtos por categoria
+    // ------------------------------------
+    public List<Produto> buscarPorCategoria(Long categoriaId) {
+        List<Produto> produtos = new ArrayList<>();
+        String sql = "SELECT * FROM produtos WHERE categoria_id = ?";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, categoriaId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Produto produto = new Produto(
+                            rs.getLong("id"),
+                            rs.getString("nome"),
+                            rs.getDouble("preco"),
+                            rs.getInt("estoque"),
+                            rs.getObject("categoria_id") != null ? rs.getLong("categoria_id") : null);
+                    produtos.add(produto);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println(
+                    "Erro ao buscar produtos da categoria ID: " + categoriaId + ". Detalhes: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return produtos;
+    }
+}

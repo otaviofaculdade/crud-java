@@ -11,17 +11,18 @@ import java.util.List;
 
 import com.google.gson.Gson;
 
-import dao.ProdutoDAO;
+import dao.CategoriaDAO;
+import model.Categoria;
 import model.Produto;
 import spark.Filter;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
-public class ApiProduto {
+public class ApiCategoria {
 
     // instâncias do DAO e GSON
-    private static final ProdutoDAO dao = new ProdutoDAO();
+    private static final CategoriaDAO dao = new CategoriaDAO();
     private static final Gson gson = new Gson();
 
     // constante para garantir que as respostas sejam JSON
@@ -29,7 +30,7 @@ public class ApiProduto {
 
     public static void main(String[] args) {
         // configura a porta do serviço
-        port(8080);
+        port(8081);
 
         // filtro para definir o tipo de conteúdo como JSON
         after(new Filter() {
@@ -39,53 +40,62 @@ public class ApiProduto {
             }
         });
 
-        // GET /produtos - Buscar todos
-        get("/produtos", new Route() {
+        // ------------------------------------
+        // GET /categorias - Buscar todas as categorias
+        // ------------------------------------
+        get("/categorias", new Route() {
             @Override
             public Object handle(Request request, Response response) {
                 return gson.toJson(dao.buscarTodos());
             }
         });
 
-        // GET /produtos/:id - Buscar produto por ID
-        get("/produtos/:id", new Route() {
+        // ------------------------------------
+        // GET /categorias/:id - Buscar categoria por ID
+        // ------------------------------------
+        get("/categorias/:id", new Route() {
             @Override
             public Object handle(Request request, Response response) {
                 try {
                     Long id = Long.parseLong(request.params(":id"));
-                    Produto produto = dao.buscarPorId(id);
-                    if (produto != null) {
-                        return gson.toJson(produto);
+                    Categoria categoria = dao.buscarPorId(id);
+                    if (categoria != null) {
+                        return gson.toJson(categoria);
                     } else {
                         response.status(404);
-                        return "{\"mensagem\": \"Produto com ID " + id + " não encontrado.\"}";
+                        return "{\"mensagem\": \"Categoria com ID " + id + " não encontrada.\"}";
                     }
                 } catch (NumberFormatException e) {
                     response.status(400);
-                    return "{\"mensagem\": \"Produto com ID inválido.\"}";
+                    return "{\"mensagem\": \"ID de categoria inválido.\"}";
                 }
             }
         });
 
-        // POST /produtos - Criar novos produtos
-        post("/produtos", new Route() {
+        // ------------------------------------
+        // POST /categorias - Criar nova categoria
+        // ------------------------------------
+        post("/categorias", new Route() {
             @Override
             public Object handle(Request request, Response response) {
                 try {
-                    Produto novoProduto = gson.fromJson(request.body(), Produto.class);
-                    dao.inserir(novoProduto);
+                    Categoria novaCategoria = gson.fromJson(request.body(), Categoria.class);
+                    dao.inserir(novaCategoria);
 
                     response.status(201);
-                    return "{\"mensagem\": \"Produto criado com sucesso.\"}";
+                    return "{\"mensagem\": \"Categoria criada com sucesso.\"}";
                 } catch (Exception e) {
+                    e.printStackTrace();
                     response.status(500);
-                    return "{\"mensagem\": \"Erro ao criar produto.\"}";
+                    return "{\"mensagem\": \"Erro ao criar categoria.\"}";
                 }
             }
         });
 
-        // PUT /produtos/:id - Editar produto pelo ID
-        put("/produtos/:id", new Route() {
+        // ------------------------------------
+        // PUT /categorias/:id - Atualizar categoria existente
+        // ------------------------------------
+        put("/categorias/:id", new Route() {
             @Override
             public Object handle(Request request, Response response) {
                 try {
@@ -93,24 +103,27 @@ public class ApiProduto {
 
                     if (dao.buscarPorId(id) == null) {
                         response.status(404);
-                        return "{\"mensagem\": \"Produto não encontrado.\"}";
+                        return "{\"mensagem\": \"Categoria não encontrada.\"}";
                     }
 
-                    Produto produtoAtualizar = gson.fromJson(request.body(), Produto.class);
-                    produtoAtualizar.setId(id);
-                    dao.atualizar(produtoAtualizar);
+                    Categoria categoriaAtualizada = gson.fromJson(request.body(), Categoria.class);
+                    categoriaAtualizada.setId(id);
+                    dao.atualizar(categoriaAtualizada);
 
                     response.status(200);
-                    return "{\"mensagem\": \"Produto atualizado com sucesso.\"}";
+                    return "{\"mensagem\": \"Categoria atualizada com sucesso.\"}";
                 } catch (Exception e) {
+                    e.printStackTrace();
                     response.status(500);
-                    return "{\"mensagem\": \"Erro ao atualizar produto.\"}";
+                    return "{\"mensagem\": \"Erro ao atualizar categoria.\"}";
                 }
             }
         });
 
-        // DELETE /produtos/:id - Excluir produto pelo ID
-        delete("/produtos/:id", new Route() {
+        // ------------------------------------
+        // DELETE /categorias/:id - Excluir categoria
+        // ------------------------------------
+        delete("/categorias/:id", new Route() {
             @Override
             public Object handle(Request request, Response response) {
                 try {
@@ -118,29 +131,17 @@ public class ApiProduto {
 
                     if (dao.buscarPorId(id) == null) {
                         response.status(404);
-                        return "{\"mensagem\": \"Produto não encontrado.\"}";
+                        return "{\"mensagem\": \"Categoria não encontrada.\"}";
                     }
 
                     dao.deletar(id);
-
                     response.status(200);
-                    return "{\"mensagem\": \"Produto deletado com sucesso.\"}";
+                    return "{\"mensagem\": \"Categoria deletada com sucesso.\"}";
                 } catch (Exception e) {
+                    e.printStackTrace();
                     response.status(500);
-                    return "{\"mensagem\": \"Erro ao deletar produto.\"}";
+                    return "{\"mensagem\": \"Erro ao deletar categoria.\"}";
                 }
-            }
-        });
-
-        // GET /categorias/:id/produtos - Listar produtos por categoria
-        get("/categorias/:id/produtos", (request, response) -> {
-            try {
-                Long categoriaId = Long.parseLong(request.params(":id"));
-                List<Produto> produtos = dao.buscarPorCategoria(categoriaId);
-                return gson.toJson(produtos);
-            } catch (NumberFormatException e) {
-                response.status(400);
-                return "{\"mensagem\": \"ID de categoria inválido.\"}";
             }
         });
     }
